@@ -183,24 +183,10 @@ console.log(config1.publicKey)
         res.status(401).json({ success: false, error: error.message });
     }
 };
-const wireguardCtrl1 = asyncHandler(async (req, res) => {
-    const filePath = path.join(__dirname, '/configs', '/guardline-server.conf')
 
-const config1 = new WgConfig({
-  wgInterface: {
-    address: ['10.10.1.1']
-  },
-  filePath
-})
-
-const { privateKey , publicKey, preSharedKey  } = await config1.generateKeys({ preSharedKey: true })
-console.log( publicKey, preSharedKey, privateKey)
-res.status(200).json({ success: true,publicKey, preSharedKey, privateKey });
-   
-});
 
 
 module.exports = {
 
-    wireguardCtrl1
+    wireguardCtrl2
 };

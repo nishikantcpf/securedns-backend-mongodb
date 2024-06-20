@@ -357,30 +357,30 @@ console.log(config1.publicKey)
 
         const command2 = `sudo systemctl restart wg-quick@wg0`;
 
-        //  exec(command, (error, stdout, stderr) => {
-        //    if (error) {
-        //      console.error(`Error: ${error.message}`);
-        //      return res.status(500).json({ error: error.message, stdout, stderr });
-        //    }
+         exec(command, (error, stdout, stderr) => {
+           if (error) {
+             console.error(`Error: ${error.message}`);
+             return res.status(500).json({ error: error.message, stdout, stderr });
+           }
 
-        //    console.log(`stdout: ${stdout}`);
-        //    console.error(`stderr: ${stderr}`);
+           console.log(`stdout: ${stdout}`);
+           console.error(`stderr: ${stderr}`);
 
-        //  });
+         });
 
 
         // restart wirguard servies 
 
-        //   exec(command2, (error, stdout, stderr) => {
-        //     if (error) {
-        //       console.error(`Error: ${error.message}`);
-        //       return res.status(500).json({ error: error.message, stdout, stderr });
-        //     }
+          exec(command2, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Error: ${error.message}`);
+              return res.status(500).json({ error: error.message, stdout, stderr });
+            }
 
-        //     console.log(`stdout: ${stdout}`);
-        //     console.error(`stderr: ${stderr}`);
+            console.log(`stdout: ${stdout}`);
+            console.error(`stderr: ${stderr}`);
 
-        //   });
+          });
 
        
 
