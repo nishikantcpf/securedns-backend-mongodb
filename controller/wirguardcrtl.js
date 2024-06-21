@@ -12,7 +12,7 @@ const util = require('util');
 
 
 // wireguard funtion
-const wireguardCtrl2 = async (req, res) => {
+const wireguardCtrl1 = async (req, res) => {
     const { uid1, userip1, token1, device1 } = req.body;
     const filePath = path.join(__dirname, '/configs', '/guardline-client1.conf');
 
@@ -188,5 +188,5 @@ console.log(config1.publicKey)
 
 module.exports = {
 
-    wireguardCtrl2
+    wireguardCtrl1
 };
