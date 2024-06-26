@@ -5,6 +5,8 @@ const util = require('util');
 const { error } = require('console');
 const VpnStat = require('../models/vpnstat'); // Corrected import name to match model
 const User = require('../models/usermodel');
+const vpnstat = require('../models/vpnstat');
+const userdetail = require('../models/userdetail');
 
 const execPromise = util.promisify(exec);
 
@@ -50,20 +52,21 @@ const userdetailCtrl = async (req, res) => {
   
 
   try {
-    const {uid1}=req.body;
-    
-    const userData = await User.findOne({ uid:uid1 }); // Find one user with matching uid
-   
+    const {uid}=req.body;
+    // const userData = ((await User.findById({_id:uid })));
+    const userData = await User.findById(uid).select('firstname lastname email ').lean();
+
+    // const userData = await userdetail.findOne({ uid:uid1 });
+   console.log(userData)
     if (!userData) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }else{
-      
+     
+      res.json({ userData });
     }
 
-    // Extract the fields you need from the userData object
-    // const { email, firstname, lastname } = userData;
 
-    res.json({ userData });
+    
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

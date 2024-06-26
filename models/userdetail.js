@@ -1,7 +1,7 @@
 const mongoose = require('mongoose'); // Erase if already required
 
 // Declare the Schema of the Mongo model
-const vpnstatSchema = new mongoose.Schema(
+const userdetailSchema = new mongoose.Schema(
     {
         email: {
             type: String,
@@ -30,4 +30,4 @@ const vpnstatSchema = new mongoose.Schema(
 
 
 //Export the model
-module.exports = mongoose.model('vpnStat', vpnstatSchema);
+module.exports = mongoose.model('userdetail', userdetailSchema);
