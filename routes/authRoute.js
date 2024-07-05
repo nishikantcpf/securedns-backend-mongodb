@@ -3,7 +3,7 @@ const { createUser, loginUserCtrl, getallUser, getaUser, deleteaUser, handleRefr
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 // const { createPayee, getPayee, successfullPayment, totalAmount, getsinglePayee } = require("../controller/payeectrl");
 const authenticateToken = require("../middlewares/authenticateToken");
-const { vpnStateCtrl, userdetailCtrl } = require("../controller/logctrl");
+const { vpnStateCtrl, userdetailCtrl, userdetailCtrlget, deviceCtrl, bigchartCtrl, statdataCtrl } = require("../controller/logctrl");
 const { wireguardCtrl1 } = require("../controller/wirguardcrtl");
 
 const router = express.Router();
@@ -13,7 +13,7 @@ const router = express.Router();
 router.get("/all-users", getallUser);
 router.get("/refresh", handleRefreshToken);
 router.get("/logout", logout);
-router.get("/:id", getaUser);
+// router.get("/:id", getaUser); this have some isue do not uncomment this
 router.delete("/:id", deleteaUser);
 router.get("/refresh", handleRefreshToken);
 router.put('/update-password', updatePassword);
@@ -21,7 +21,7 @@ router.put('/update-password', updatePassword);
 
 router.post("/signup", createUser);
 router.post("/login", loginUserCtrl);
-router.get("/protected-route", authenticateToken , protectedctrl)
+// router.get("/protected-route", authenticateToken , protectedctrl)
 router.post("/wireguardapi", wireguardCtrl);
 router.post("/wireguardapi1", wireguardCtrl1);
 
@@ -29,5 +29,11 @@ router.post("/wireguardapi1", wireguardCtrl1);
 router.post("/vpnstat", vpnStateCtrl);
 // router.post("/contact", contactCtrl);
 router.post("/userdetail", userdetailCtrl);
+
+router.get("/userdetail/:id", userdetailCtrlget);
+router.get("/device/:id", deviceCtrl);
+router.get("/bigchart/:id", bigchartCtrl);
+router.get("/statdata/:id",statdataCtrl);
+
 
 module.exports = router;

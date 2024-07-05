@@ -382,8 +382,6 @@ console.log(config1.publicKey)
 
           });
 
-       
-
         const result = new Conflog({
 
             uid: uid1,

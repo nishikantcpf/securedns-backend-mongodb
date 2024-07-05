@@ -30,4 +30,4 @@ const vpnstatSchema = new mongoose.Schema(
 
 
 //Export the model
-module.exports = mongoose.model('vpnStat', vpnstatSchema);
+module.exports = mongoose.model('VpnStat', vpnstatSchema);
