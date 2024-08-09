@@ -11,6 +11,9 @@ const asyncHandler = require('express-async-handler');
 const validateMongoDbId = require('../utils/validateMongodbId');
 const conf_log = require('../models/conf_log');
 const execPromise = util.promisify(exec);
+const fs = require('fs');
+const IPAssignment = require('../models/IPAssignment');
+const { json } = require('body-parser');
 
 const vpnStateCtrl = async (req, res) => {
   try {
@@ -269,6 +272,68 @@ const statdataCtrl = asyncHandler(async (req, res,) => {
   }
 });
 
+// Function to read the log file and check the validity of domain queries
+const checkDomains = async(req, res) => {
+  const user = await User.findById(req.body.userId);
+  const ips = await IPAssignment.find({ userId: user._id });
+    
+  const ipAddresses = ips.map(ip => ip.ipAddress);
+
+  const monitoredIPs = ipAddresses;
+  const extractIPAddress = (ipWithPort) => ipWithPort.split('.').slice(0, 4).join('.');
+
+  // Function to convert the log timestamp to a Date object
+const parseTimestamp = (timestamp) => {
+  const [time, microseconds] = timestamp.split('.');
+  return new Date(`1970-01-01T${time}Z`);
+};
+  // Current time and time 24 hours ago
+  const now = new Date();
+  const past24Hours = new Date(now.getTime() - 2400000 * 60 * 60 * 1000);
+  
+  
+  const logFilePath = path.join(__dirname, process.env.LOG_PATH);
+  fs.readFile(logFilePath, 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to read log file' });
+    }
+
+    // Extract DNS queries and responses from the log file
+    const queries = {};
+    const lines = data.split('\n');
+    
+    lines.forEach(line => {
+      const matchQuery = line.match(/(\d{2}:\d{2}:\d{2}\.\d{6}) IP (\S+)\.\d+ > \S+: (\d+)\+ A\? (\S+)\. \(\d+\)/);
+      if (matchQuery) {
+        const [timestamp, , ipWithPort, queryId, domain] = matchQuery;
+        const ip = extractIPAddress(ipWithPort);
+        const logTime = parseTimestamp(timestamp);
+        if (monitoredIPs.includes(ip) && logTime >= past24Hours) {
+          // console.log(ip,logTime, domain,  'valid')
+          if (!queries[queryId]) {
+            queries[queryId] = {ip , domain, status: 'valid', timestamp: logTime };
+          }
+        }
+      }
+
+      const matchResponse = line.match(/(\d{2}:\d{2}:\d{2}\.\d{6}) IP \S+ > (\S+)\.\d+: (\d+) NXDomain \d+\/\d+\/\d+ \(\d+\)/);
+      if (matchResponse) {
+        const [timestamp, , ipWithPort, queryId] = matchResponse;
+        const ip = extractIPAddress(ipWithPort);
+        const logTime = parseTimestamp(timestamp);
+        if (monitoredIPs.includes(ip) && logTime >= past24Hours) {
+          if (queries[queryId]) {
+            queries[queryId].status = 'invalid';
+          }
+        }
+      }
+    });
+
+    // Create the response
+    const result = Object.values(queries).map(({ip, domain, status,timestamp }) => ({ip, domain, status,timestamp }));
+    res.json(result);
+  });
+};
 
 module.exports = {
   vpnStateCtrl,
@@ -279,4 +344,8 @@ module.exports = {
   deviceCtrl,
   bigchartCtrl,
   statdataCtrl,
+  // dns_logs,
+  // assingip,
+  // readlog,
+  checkDomains
 };
