@@ -9,7 +9,7 @@ async function findAvailableIP() {
       const assignedIPSet = new Set(assignedIPs.map(ip => ip.ipAddress));
   
       for (let i = 1; i <= 225; i++) {
-        for (let j = 1; j <= 254; j++) {
+        for (let j = 6; j <= 254; j++) {
           // ipRange.push(`192.168.${i}.${j}`);
           const currentIP = `192.168.69.${j}`
           if (!assignedIPSet.has(currentIP)) {

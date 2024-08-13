@@ -14,6 +14,7 @@ const execPromise = util.promisify(exec);
 const fs = require('fs');
 const IPAssignment = require('../models/IPAssignment');
 const { json } = require('body-parser');
+const findAvailableIP = require('../utils/findAvilabeIP');
 
 const vpnStateCtrl = async (req, res) => {
   try {
@@ -272,9 +273,37 @@ const statdataCtrl = asyncHandler(async (req, res,) => {
   }
 });
 
+
+
+const assingip = asyncHandler(async (req, res) => {
+
+  try {
+    // Find an available IP in the range
+    const assignedIP = await findAvailableIP();
+    if (!assignedIP) {
+      return res.status(404).json({ message: 'No available IP addresses in range.' });
+    }
+    // Assign the IP to the user
+    const user = await User.findById(req.body.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+    // Save IP assignment record
+    const newAssignment = new IPAssignment({
+      userId: req.body.userId,
+      ipAddress: assignedIP
+    });
+    await newAssignment.save();
+    res.status(200).json({ message: 'IP assigned successfully.', ipAddress: assignedIP });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Function to read the log file and check the validity of domain queries
 const checkDomains = async(req, res) => {
-  const user = await User.findById(req.body.userId);
+  const ids= req.params.id
+  const user = await User.findById(ids);
   const ips = await IPAssignment.find({ userId: user._id });
     
   const ipAddresses = ips.map(ip => ip.ipAddress);
@@ -283,20 +312,45 @@ const checkDomains = async(req, res) => {
   const extractIPAddress = (ipWithPort) => ipWithPort.split('.').slice(0, 4).join('.');
 
   // Function to convert the log timestamp to a Date object
-const parseTimestamp = (timestamp) => {
-  const [time, microseconds] = timestamp.split('.');
-  return new Date(`1970-01-01T${time}Z`);
-};
+// const parseTimestamp = (timestamp) => {
+//   const [time, microseconds] = timestamp.split('.');
+//   return new Date(`2024-08-10T${time}Z`);
+// };
+
+const parseTimestamp = (timestamp) =>{
+  // Split the timestamp into time and microseconds
+  let [time, microseconds] = timestamp.split('.');
+  
+  // Parse the time into hours, minutes, and seconds
+  let [hours, minutes, seconds] = time.split(':');
+  
+  // Create a new Date object for today
+  let date = new Date();
+  
+  // Set the hours, minutes, and seconds
+  date.setUTCHours(parseInt(hours));
+  date.setUTCMinutes(parseInt(minutes));
+  date.setUTCSeconds(parseInt(seconds));
+  
+  // Convert microseconds to milliseconds and set the milliseconds
+  let milliseconds = Math.round(parseInt(microseconds) / 1000);
+  date.setUTCMilliseconds(milliseconds);
+  // Convert the date to ISO 8601 format
+  return date;
+}
+
   // Current time and time 24 hours ago
   const now = new Date();
-  const past24Hours = new Date(now.getTime() - 2400000 * 60 * 60 * 1000);
+  const past24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000 );
   
   
-  const logFilePath = path.join(__dirname, process.env.LOG_PATH);
+  const logFilePath = path.join(__dirname, '../logs.txt');
+
   fs.readFile(logFilePath, 'utf8', (err, data) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to read log file' });
     }
+   
 
     // Extract DNS queries and responses from the log file
     const queries = {};
@@ -304,12 +358,15 @@ const parseTimestamp = (timestamp) => {
     
     lines.forEach(line => {
       const matchQuery = line.match(/(\d{2}:\d{2}:\d{2}\.\d{6}) IP (\S+)\.\d+ > \S+: (\d+)\+ A\? (\S+)\. \(\d+\)/);
+      
       if (matchQuery) {
         const [timestamp, , ipWithPort, queryId, domain] = matchQuery;
         const ip = extractIPAddress(ipWithPort);
         const logTime = parseTimestamp(timestamp);
+        // console.log(logTime)
+      
         if (monitoredIPs.includes(ip) && logTime >= past24Hours) {
-          // console.log(ip,logTime, domain,  'valid')
+         
           if (!queries[queryId]) {
             queries[queryId] = {ip , domain, status: 'valid', timestamp: logTime };
           }
@@ -345,7 +402,7 @@ module.exports = {
   bigchartCtrl,
   statdataCtrl,
   // dns_logs,
-  // assingip,
+  assingip,
   // readlog,
   checkDomains
 };

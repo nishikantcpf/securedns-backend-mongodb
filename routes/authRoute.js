@@ -3,7 +3,7 @@ const { createUser, loginUserCtrl, getallUser, getaUser, deleteaUser, handleRefr
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 // const { createPayee, getPayee, successfullPayment, totalAmount, getsinglePayee } = require("../controller/payeectrl");
 const authenticateToken = require("../middlewares/authenticateToken");
-const { vpnStateCtrl, userdetailCtrl, userdetailCtrlget, deviceCtrl, bigchartCtrl, statdataCtrl,  checkDomains } = require("../controller/logctrl");
+const { vpnStateCtrl, userdetailCtrl, userdetailCtrlget, deviceCtrl, bigchartCtrl, statdataCtrl,  checkDomains, assingip } = require("../controller/logctrl");
 const { wireguardCtrl1 } = require("../controller/wirguardcrtl");
 
 const router = express.Router();
@@ -35,9 +35,9 @@ router.get("/device/:id", deviceCtrl);
 router.get("/bigchart/:id", bigchartCtrl);
 router.get("/statdata/:id",statdataCtrl);
 // router.get("/dns_logs",dns_logs)
-// router.get("/assingip3",assingip)
+router.get("/assingip3",assingip)
 // router.get("/readlog",readlog)
-router.get("/checkDomains",checkDomains)
+router.get("/checkDomains/:id",checkDomains)
 
 
 module.exports = router;
