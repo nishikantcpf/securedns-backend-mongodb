@@ -264,7 +264,7 @@ const wireguardCtrl = async (req, res) => {
         const config1 = new WgConfig({
             wgInterface: {
                 address: [ipaddr],
-                dns: ['101.53.147.30']
+                dns: ['115.113.39.74']
             },
             filePath
         })
@@ -452,7 +452,7 @@ const newwireguardCtrl = async (req, res) => {
         const config1 = new WgConfig({
             wgInterface: {
                 address: [ipaddr],
-                dns: ['101.53.147.30']
+                dns: ['115.113.39.74']
             },
             filePath
         })
