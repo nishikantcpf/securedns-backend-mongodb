@@ -301,84 +301,87 @@ const assingip = asyncHandler(async (req, res) => {
 });
 
 // Function to read the log file and check the validity of domain queries
-const checkDomains = async(req, res) => {
-  const ids= req.params.id
+const checkDomains = async (req, res) => {
+  const ids = req.params.id
   const user = await User.findById(ids);
   const ips = await IPAssignment.find({ userId: user._id });
-    
   const ipAddresses = ips.map(ip => ip.ipAddress);
-
   const monitoredIPs = ipAddresses;
   const extractIPAddress = (ipWithPort) => ipWithPort.split('.').slice(0, 4).join('.');
 
-  // Function to convert the log timestamp to a Date object
-// const parseTimestamp = (timestamp) => {
-//   const [time, microseconds] = timestamp.split('.');
-//   return new Date(`2024-08-10T${time}Z`);
-// };
+  const parseTimestamp = (timestamp) => {
+console.log(timestamp)
+    // Split the timestamp into time and microseconds
+    // let [time, microseconds] = timestamp.split('.');
+    let [datePart, timePart] = timestamp.split(' ');
+    let [time, microseconds] = timePart.split('.');
+    // Parse the time into hours, minutes, and seconds
+    let [hours, minutes, seconds] = time.split(':');
 
-const parseTimestamp = (timestamp) =>{
-  // Split the timestamp into time and microseconds
-  let [time, microseconds] = timestamp.split('.');
-  
-  // Parse the time into hours, minutes, and seconds
-  let [hours, minutes, seconds] = time.split(':');
-  
-  // Create a new Date object for today
-  let date = new Date();
-  
-  // Set the hours, minutes, and seconds
-  date.setUTCHours(parseInt(hours));
-  date.setUTCMinutes(parseInt(minutes));
-  date.setUTCSeconds(parseInt(seconds));
-  
-  // Convert microseconds to milliseconds and set the milliseconds
-  let milliseconds = Math.round(parseInt(microseconds) / 1000);
-  date.setUTCMilliseconds(milliseconds);
-  // Convert the date to ISO 8601 format
-  return date;
-}
+    // Create a new Date object for today
+     // Create a new Date object using the parsed date
+     let [year, month, day] = datePart.split('-');
+     let date = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+
+    // Set the hours, minutes, and seconds
+    date.setUTCHours(parseInt(hours));
+    date.setUTCMinutes(parseInt(minutes));
+    date.setUTCSeconds(parseInt(seconds));
+
+    // Convert microseconds to milliseconds and set the milliseconds
+    let milliseconds = Math.round(parseInt(microseconds) / 1000);
+    date.setUTCMilliseconds(milliseconds);
+    // Convert the date to ISO 8601 format
+    return date;
+  }
 
   // Current time and time 24 hours ago
   const now = new Date();
-  const past24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000 );
-  
-  
-  const logFilePath = path.join(__dirname, '../logs.txt');
+  const past24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+
+  const logFilePath = path.join(__dirname, process.env.LOG_PATH);
 
   fs.readFile(logFilePath, 'utf8', (err, data) => {
     if (err) {
       return res.status(500).json({ error: 'Failed to read log file' });
     }
-   
+
 
     // Extract DNS queries and responses from the log file
     const queries = {};
     const lines = data.split('\n');
-    
+
     lines.forEach(line => {
-      const matchQuery = line.match(/(\d{2}:\d{2}:\d{2}\.\d{6}) IP (\S+)\.\d+ > \S+: (\d+)\+ A\? (\S+)\. \(\d+\)/);
-      
+      const matchQuery = line.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}) IP (\S+)\.\d+ > \S+: (\d+)\+ A\? (\S+)\. \(\d+\)/);
+
       if (matchQuery) {
         const [timestamp, , ipWithPort, queryId, domain] = matchQuery;
+
         const ip = extractIPAddress(ipWithPort);
+
         const logTime = parseTimestamp(timestamp);
-        // console.log(logTime)
-      
-        if (monitoredIPs.includes(ip) && logTime >= past24Hours) {
-         
+
+
+        if (monitoredIPs.includes(ip)
+          // && logTime >= past24Hours
+        ) {
+
           if (!queries[queryId]) {
-            queries[queryId] = {ip , domain, status: 'valid', timestamp: logTime };
+            queries[queryId] = { ip, domain, status: 'valid', timestamp: logTime };
           }
         }
       }
 
-      const matchResponse = line.match(/(\d{2}:\d{2}:\d{2}\.\d{6}) IP \S+ > (\S+)\.\d+: (\d+) NXDomain \d+\/\d+\/\d+ \(\d+\)/);
+      const matchResponse = line.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6}) IP \S+ > (\S+)\.\d+: (\d+) NXDomain \d+\/\d+\/\d+ \(\d+\)/);
+
       if (matchResponse) {
         const [timestamp, , ipWithPort, queryId] = matchResponse;
         const ip = extractIPAddress(ipWithPort);
         const logTime = parseTimestamp(timestamp);
-        if (monitoredIPs.includes(ip) && logTime >= past24Hours) {
+        if (monitoredIPs.includes(ip)
+          // && logTime >= past24Hours
+        ) {
           if (queries[queryId]) {
             queries[queryId].status = 'invalid';
           }
@@ -387,7 +390,7 @@ const parseTimestamp = (timestamp) =>{
     });
 
     // Create the response
-    const result = Object.values(queries).map(({ip, domain, status,timestamp }) => ({ip, domain, status,timestamp }));
+    const result = Object.values(queries).sort((a, b) => b.timestamp - a.timestamp).map(({ ip, domain, status, timestamp }) => ({ ip, domain, status, timestamp }));
     res.json(result);
   });
 };
