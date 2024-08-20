@@ -364,7 +364,7 @@ console.log(timestamp)
 
 
         if (monitoredIPs.includes(ip)
-          // && logTime >= past24Hours
+          && logTime >= past24Hours
         ) {
 
           if (!queries[queryId]) {
@@ -380,7 +380,7 @@ console.log(timestamp)
         const ip = extractIPAddress(ipWithPort);
         const logTime = parseTimestamp(timestamp);
         if (monitoredIPs.includes(ip)
-          // && logTime >= past24Hours
+          && logTime >= past24Hours
         ) {
           if (queries[queryId]) {
             queries[queryId].status = 'invalid';
